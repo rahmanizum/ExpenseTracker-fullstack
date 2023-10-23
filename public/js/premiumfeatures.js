@@ -52,7 +52,6 @@ async function premium() {
         const leaderboard = await authenticatedAxios.get('premium/leaderborddata');
         showLeaderboard(leaderboard.data);
         const downloadhistory = await authenticatedAxios.get('premium/downloadhistory');
-        console.log(downloadhistory.data);
         showDownloadhistory(downloadhistory.data);
     } catch (error) {
         console.log(error);

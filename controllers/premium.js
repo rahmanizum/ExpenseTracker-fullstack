@@ -11,6 +11,7 @@ exports.getLeaderboardExpenses = async (request, response, next) => {
     const leaderboard = await User.findAll({
       attributes: ['id', 'name', 'totalExpenses'],
       order: [['totalExpenses', 'DESC']],
+      limit:15
     });
     return response.status(200).json(leaderboard);
   } catch (error) {
@@ -24,7 +25,7 @@ exports.getDownloadURL = async (request, response, next) => {
   try {
     const user = request.user;
     const expenses = await user.getExpenses({
-      attributes: ["category", "pmethod", "amount", "date"]
+      attributes: ["category", "pmethod", "amount", "date"],
     });
     const formattedExpenses = expenses.map(expense => {
       return `Category: ${expense.category}

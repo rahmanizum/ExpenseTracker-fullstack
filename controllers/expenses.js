@@ -15,7 +15,7 @@ exports.addExpenses = async (request, response, next) => {
             amount: amount,
             date: date
         }, { transaction });
-        const totalExpenses = await Expenses.sum('amount', { where: { UserId: user.id  },transaction });
+        const totalExpenses = await Expenses.sum('amount', { where: { UserId: user.id }, transaction });
         await user.update({ totalexpenses: totalExpenses }, { transaction });
         await transaction.commit();
         response.status(200).json({ message: 'Data successfully added' });
@@ -31,9 +31,20 @@ exports.addExpenses = async (request, response, next) => {
 
 exports.getExpenses = async (request, response, nex) => {
     try {
+        const page = request.query.page;
         const user = request.user;
-        const expenses = await user.getExpenses({ include: ['User'] });
-        response.status(200).json(expenses);
+        const limit = 5;
+        const offset = (page - 1) * limit;
+        const expenses = await user.getExpenses({
+            offset: offset,
+            limit: limit
+        });
+        response.status(200).json({
+            expenses: expenses,
+            totalexpenses: user.totalexpenses,
+            hasMoreExpenses : expenses.length === limit,
+            hasPreviousExpenses : page > 1
+        });
 
     } catch (error) {
         console.log(error);
@@ -43,12 +54,12 @@ exports.getExpenses = async (request, response, nex) => {
 exports.deletebyId = async (request, response, next) => {
     let transaction;
     try {
-        transaction= await sequelize.transaction();
+        transaction = await sequelize.transaction();
         const dID = request.params.dID;
         const user = request.user;
-        const result = await Expenses.destroy({ where: { id: dID, userId: request.user.id },transaction });
-        const totalExpenses = await Expenses.sum('amount', { where: { UserId: user.id },transaction });
-        if(totalExpenses)await user.update({ totalexpenses: totalExpenses },{transaction});
+        const result = await Expenses.destroy({ where: { id: dID, userId: request.user.id }, transaction });
+        const totalExpenses = await Expenses.sum('amount', { where: { UserId: user.id }, transaction });
+        if (totalExpenses) await user.update({ totalexpenses: totalExpenses }, { transaction });
         else await user.update({ totalexpenses: 0 });
         if (result == 0) {
             return response.status(401).json({ message: 'You are not Authorized' });
@@ -57,8 +68,8 @@ exports.deletebyId = async (request, response, next) => {
         }
         await transaction.commit();
     } catch (error) {
-        if(transaction){
-           await transaction.rollback();
+        if (transaction) {
+            await transaction.rollback();
         }
         console.log(error);
     }
@@ -86,15 +97,15 @@ exports.updateExpensebyid = async (request, response, next) => {
             pmethod: pmethod,
             amount: amount,
             date: date
-        }, { where: { id: uID } },{transaction});
-        const totalExpenses = await Expenses.sum('amount', { where: { UserId: user.id } },{transaction});
-        if(totalExpenses)await user.update({ totalexpenses: totalExpenses },{transaction});
+        }, { where: { id: uID } }, { transaction });
+        const totalExpenses = await Expenses.sum('amount', { where: { UserId: user.id } }, { transaction });
+        if (totalExpenses) await user.update({ totalexpenses: totalExpenses }, { transaction });
         else await user.update({ totalexpenses: 0 });
         response.status(200).json({ message: 'Data succesfully updated' });
         transaction.commit();
 
     } catch (error) {
-        if(transaction){
+        if (transaction) {
             await transaction.rollback();
         }
         console.log(error);

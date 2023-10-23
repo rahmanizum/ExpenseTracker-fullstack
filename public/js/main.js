@@ -20,8 +20,10 @@ const elements = {
     successDiv: myForm.querySelector('#successDiv'),
     updateDiv: myForm.querySelector('#updateDiv'),
     buypremiumbtn: document.querySelector('#buypremiumbtn'),
+    currentpagebtn:document.querySelector('#currentPage'),
+    nextpagebtn:document.querySelector('#nextPage'),
+    prevpagebtn: document.querySelector('#prevPage')
 };
-
 elements.submitbtn.addEventListener('click', addExpense);
 elements.expensePlaceholder.addEventListener('click', (e) => {
     if (e.target && e.target.classList.contains("delbtn")) deleteExpense(e);
@@ -30,17 +32,24 @@ elements.expensePlaceholder.addEventListener('click', (e) => {
 elements.buypremiumbtn.addEventListener('click', purchasepremium);
 elements.logoutbtn.addEventListener('click', logout);
 
+elements.prevpagebtn.addEventListener('click',onclickprevpage);
+elements.nextpagebtn.addEventListener('click',onclicknextpage);
+
 let authenticatedAxios = createauthaxios();
 let userName, userEmail;
+let currentPage = 1;
+let hasMoreExpenses;
+let hasPreviousExpenses;
 
 setupProfile();
 refresh();
 function showOutput(response) {
     elements.expensePlaceholder.innerHTML = "";
-    let totPrice = 0;
-    if (response.data.length > 0) {
-        response.data.forEach((ele, index) => {
-            totPrice += Number(ele.amount);
+    elements.totalPlaceholder.innerHTML = `&#8377;${response.totalexpenses}`;
+    hasMoreExpenses = response.hasMoreExpenses;
+    hasPreviousExpenses = response.hasPreviousExpenses;
+    if (response.expenses.length > 0) {
+        response.expenses.forEach((ele, index) => {
             const tr = document.createElement('tr');
             const html =
                 `<td>${index + 1}</td>
@@ -63,12 +72,10 @@ function showOutput(response) {
             elements.expensePlaceholder.appendChild(tr);
 
         })
-        elements.totalPlaceholder.innerHTML = `&#8377;${totPrice}`;
-        const lastData = response.data[response.data.length - 1];
+        const lastData = response.expenses[response.expenses.length - 1];
         const lastdate = new Date(lastData.createdAt).toLocaleDateString();
         elements.lupdatePlaceholder.innerHTML = lastdate;
     } else {
-        elements.totalPlaceholder.innerHTML = `&#8377;00:00`;
         elements.lupdatePlaceholder.innerHTML = `No data present`;
     }
 
@@ -98,6 +105,24 @@ function createauthaxios() {
 function logout(e) {
     localStorage.removeItem("token");
 }
+function updatePageNumber() { 
+    $('#currentPage').text(currentPage);
+    $('#prevPage').prop('disabled', !hasPreviousExpenses);
+    $('#nextPage').prop('disabled', !hasMoreExpenses); 
+}
+function onclickprevpage (e) {
+    if (hasPreviousExpenses) {
+        currentPage--;
+        refresh();
+    }
+};
+function onclicknextpage () {
+    if (hasMoreExpenses) { 
+        currentPage++;
+        refresh();
+    }
+}
+
 async function setupProfile() {
     try {
         const currentuser = await authenticatedAxios.get(`user/currentuser`);
@@ -236,8 +261,9 @@ async function editExpense(e) {
 
 async function refresh() {
     try {
-        const response = await authenticatedAxios.get(`expenses/getexpenses`);
-        showOutput(response);
+        const response = await authenticatedAxios.get(`expenses/getexpenses?page=${currentPage}`);
+        showOutput(response.data);
+        updatePageNumber();
     } catch (error) {
         if (error.response && error.response.status === 401) {
             alert(error.response.data.message);
