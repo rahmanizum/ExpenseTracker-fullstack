@@ -1,15 +1,12 @@
 const User = require('../models/users');
 const ForgotPasswords = require('../models/forgotpasswords');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const Sib = require('sib-api-v3-sdk');
 const dotenv = require('dotenv');
 dotenv.config();
-const secretKey = process.env.SECRET_KEY;
 const client = Sib.ApiClient.instance;
 client.authentications['api-key'].apiKey = process.env.SIB_API_KEY;
 const tranEmailApi = new Sib.TransactionalEmailsApi();
-
 exports.resetpasswordform = async (request, response, next) => {
     try {
         let id = request.params.id;
@@ -60,7 +57,7 @@ exports.requestresetpassword = async (request, response, next) => {
                 <body>
                     <h1>Reset Your Password</h1>
                     <p>Click the button below to reset your password:</p>
-                    <button><a href="http://192.168.29.221:6363/password/reset/{{params.role}}">Reset Password</a></button>
+                    <button><a href="${process.env.WEBSITE}/password/reset/{{params.role}}">Reset Password</a></button>
                 </body>
                 </html>`, params: {
                     role: id

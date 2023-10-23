@@ -1,8 +1,13 @@
 
 const express = require('express');
 const cors = require('cors');
-const sequelize = require('./util/database');
 const dotenv = require('dotenv');
+const fs = require('fs');
+const hemet = require('helmet');
+const morgan = require('morgan');
+
+const sequelize = require('./util/database');
+
 dotenv.config();
 const PORT = process.env.PORT;
 
@@ -19,11 +24,15 @@ const purchaseRouter = require('./routes/purchase');
 const premiumRouter = require('./routes/premium');
 const passwordRouter = require('./routes/password');
 
+const accessLogStream = fs.createWriteStream('./access.log', { flags: 'a' });
+
 const app = express();
+app.use(morgan('combined', { stream: accessLogStream }));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({extended:false}));
 app.use(express.static('public'));
+
 
 User.hasMany(Expenses);
 Expenses.belongsTo(User,{constraints:true, onDelete:'CASCADE'});
