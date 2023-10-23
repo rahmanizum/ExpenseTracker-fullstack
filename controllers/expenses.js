@@ -33,8 +33,8 @@ exports.getExpenses = async (request, response, nex) => {
     try {
         const page = request.query.page;
         const user = request.user;
-        const limit = 5;
-        const offset = (page - 1) * limit;
+        const limit = Number(request.query.noitem);
+        const offset = (page - 1) * 5;
         const expenses = await user.getExpenses({
             offset: offset,
             limit: limit

@@ -22,7 +22,8 @@ const elements = {
     buypremiumbtn: document.querySelector('#buypremiumbtn'),
     currentpagebtn:document.querySelector('#currentPage'),
     nextpagebtn:document.querySelector('#nextPage'),
-    prevpagebtn: document.querySelector('#prevPage')
+    prevpagebtn: document.querySelector('#prevPage'),
+    noiteminpage:document.querySelector('#noiteminpage'),
 };
 elements.submitbtn.addEventListener('click', addExpense);
 elements.expensePlaceholder.addEventListener('click', (e) => {
@@ -35,11 +36,14 @@ elements.logoutbtn.addEventListener('click', logout);
 elements.prevpagebtn.addEventListener('click',onclickprevpage);
 elements.nextpagebtn.addEventListener('click',onclicknextpage);
 
+elements.noiteminpage.addEventListener('change',onSelectnoitem);
+
 let authenticatedAxios = createauthaxios();
 let userName, userEmail;
 let currentPage = 1;
 let hasMoreExpenses;
 let hasPreviousExpenses;
+let noitem =5;
 
 setupProfile();
 refresh();
@@ -52,7 +56,7 @@ function showOutput(response) {
         response.expenses.forEach((ele, index) => {
             const tr = document.createElement('tr');
             const html =
-                `<td>${index + 1}</td>
+                `<td>${((currentPage-1)*noitem)+index + 1}</td>
         <td>${ele.category}</td>
         <td>${ele.pmethod}</td>
         <td> &#8377; ${ele.amount}</td>
@@ -121,6 +125,11 @@ function onclicknextpage () {
         currentPage++;
         refresh();
     }
+}
+function onSelectnoitem (){
+    noitem = elements.noiteminpage.value;
+    currentPage=1;
+    refresh();
 }
 
 async function setupProfile() {
@@ -261,14 +270,16 @@ async function editExpense(e) {
 
 async function refresh() {
     try {
-        const response = await authenticatedAxios.get(`expenses/getexpenses?page=${currentPage}`);
+        const response = await authenticatedAxios.get(`expenses/getexpenses?page=${currentPage}&noitem=${noitem}`);
         showOutput(response.data);
         updatePageNumber();
     } catch (error) {
         if (error.response && error.response.status === 401) {
+            console.log(error);
             alert(error.response.data.message);
             window.location.href = "home";
         } else {
+            console.log(error);
             alert("Something went wrong please log in again");
             window.location.href = "home";
         }
